@@ -1,28 +1,44 @@
 package com.playlist.decorator;
 
-/**
- * Efeito que aplica uma rampa linear de volume nas primeiras amostras.
- */
-public final class FadeInEffect extends AudioEffect {
+public class FadeInEffect extends AudioEffect {
 
-  /**
-   * Cria o efeito de fade in.
-   *
-   * @param wrapped áudio decorado.
-   * @param sampleCount quantidade de amostras usadas na rampa.
-   */
-  public FadeInEffect(AudioTrack wrapped, int sampleCount) {
-    super(wrapped);
-    throw new UnsupportedOperationException("Exercício 4: implemente o construtor de FadeInEffect");
-  }
+    private final double durationSeconds;
 
-  @Override
-  protected String describe() {
-    throw new UnsupportedOperationException("Exercício 4: implemente FadeInEffect.describe");
-  }
+    public FadeInEffect(AudioTrack wrapped, double durationSeconds) {
+        super(wrapped);
+        if (durationSeconds < 0.0) {
+            throw new IllegalArgumentException();
+        }
+        this.durationSeconds = durationSeconds;
+    }
 
-  @Override
-  public double[] getSamples() {
-    throw new UnsupportedOperationException("Exercício 4: implemente FadeInEffect.getSamples");
-  }
+    public FadeInEffect(AudioTrack wrapped, int durationSeconds) {
+        this(wrapped, (double) durationSeconds);
+    }
+
+    @Override
+    public double[] getSamples() {
+        double[] original = wrapped.getSamples();
+        double[] processed = new double[original.length];
+        int total = original.length;
+        int fadeLength = (int) Math.min(total, durationSeconds);
+
+        for (int i = 0; i < total; i++) {
+            if (i < fadeLength && fadeLength > 0) {
+                double factor = (double) i / fadeLength;
+                processed[i] = original[i] * factor;
+            } else {
+                processed[i] = original[i];
+            }
+        }
+        return processed;
+    }
+
+    @Override
+    public String getEffectChain() {
+        if (durationSeconds == (long) durationSeconds) {
+            return wrapped.getEffectChain() + String.format(" -> fadeIn(%d)", (long) durationSeconds);
+        }
+        return wrapped.getEffectChain() + String.format(" -> fadeIn(%.1f)", durationSeconds);
+    }
 }

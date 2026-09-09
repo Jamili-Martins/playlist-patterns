@@ -1,29 +1,39 @@
 package com.playlist.decorator;
 
-/**
- * Efeito que zera amostras cujo valor absoluto fica abaixo de um limiar.
- */
-public final class NoiseGateEffect extends AudioEffect {
+import java.util.Locale;
 
-  /**
-   * Cria o efeito de noise gate.
-   *
-   * @param wrapped áudio decorado.
-   * @param threshold limiar de corte.
-   */
-  public NoiseGateEffect(AudioTrack wrapped, double threshold) {
-    super(wrapped);
-    throw new UnsupportedOperationException(
-            "Exercício 4: implemente o construtor de NoiseGateEffect");
-  }
+public class NoiseGateEffect extends AudioEffect {
 
-  @Override
-  protected String describe() {
-    throw new UnsupportedOperationException("Exercício 4: implemente NoiseGateEffect.describe");
-  }
+    private final double threshold;
 
-  @Override
-  public double[] getSamples() {
-    throw new UnsupportedOperationException("Exercício 4: implemente NoiseGateEffect.getSamples");
-  }
+    public NoiseGateEffect(AudioTrack wrapped, double threshold) {
+        super(wrapped);
+        if (threshold < 0.0 || threshold > 1.0) {
+            throw new IllegalArgumentException();
+        }
+        this.threshold = threshold;
+    }
+
+    public NoiseGateEffect(AudioTrack wrapped, int threshold) {
+        this(wrapped, (double) threshold);
+    }
+
+    @Override
+    public double[] getSamples() {
+        double[] original = wrapped.getSamples();
+        double[] processed = new double[original.length];
+        for (int i = 0; i < original.length; i++) {
+            if (Math.abs(original[i]) < threshold) {
+                processed[i] = 0.0;
+            } else {
+                processed[i] = original[i];
+            }
+        }
+        return processed;
+    }
+
+    @Override
+    public String getEffectChain() {
+        return wrapped.getEffectChain() + String.format(Locale.US, " -> noiseGate(%.2f)", threshold);
+    }
 }
